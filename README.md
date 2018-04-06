@@ -11,4 +11,4 @@ If python is not installed, the .bat file will obviously not work, while the .ex
 * The SourceAll folder is the code used for development.
 * The Distributable folder is a folder containing the minimum required files.
 * The BackupperDistrib.zip file is the zipped version of the Distributable folder.
-* The backup.exe file is a one-click executable of the backupper, but is significantly slower.
+* The backup.exe file is a one-click executable of the backupper, but is significantly slower than Distributable/Backup.bat .
