@@ -1,2 +1,2 @@
-E:\javascript
-D:\Jonathan\PROJECTS\Python\Backupper\BackupTestExe
+
+E:/
