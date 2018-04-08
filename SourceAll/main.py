@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import shutil
 import win32api
@@ -38,7 +38,7 @@ class Language:
         ' and press enter.' : ' en duw op enter.',
         'You are about to backup' : 'U staat op het punt om de volgende map te backuppen:',
         'If these are not the folders you want, type ' : 'Indien dit niet de correcte mappen zijn die u wenst te gebruiken, typ dan ',
-        'CHANGE' : 'VERANDER',
+        'CHANGE' : 'WIJZIG',
         ' to change them.' : '.',
         'If the above information is correct, type ' : 'Indien deze wel correct zijn, typ dan ',
         'START' : 'START',
@@ -159,7 +159,7 @@ def backup(directoriesFile):
     '''Print a last message'''
     os.system('mode con: lines=4')   # Resizes cmd
     print(Style.BRIGHT + Fore.GREEN + Lang['Backup complete.'])
-    print(Style.BRIGHT + Fore.GREEN + Lang['Copied %d files, equal to %s.'] % (str(stats['filesCopied']), readableBytes(stats['bytesCopied'])))
+    print(Style.BRIGHT + Fore.GREEN + Lang['Copied %d files, equal to %s.'] % (stats['filesCopied'], readableBytes(stats['bytesCopied'])))
     print(Style.DIM + Fore.GREEN + Lang['Press enter to finish the backup.'])
     input()
     sys.exit()
