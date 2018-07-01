@@ -1,7 +1,7 @@
 # Backupper
 This is an incremental backupping program.
 You specify the folder that you want to backup, and the folder you want the place the backup in.
-**The program will then check for files that are different in both directories (i.e., have been changed since last
+**The program will then check for files that differ between both directories (i.e. have been changed since last
 backup or simply haven't been backupped yet) and copy only those.**
 
 
