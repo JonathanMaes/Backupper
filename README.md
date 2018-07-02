@@ -8,6 +8,7 @@ backup or simply haven't been backupped yet) and copy only those.**
 # How to run
 | Manner            | Doubleclick file:               | Important notes                                                |
 | ----------------- |-------------------------------- | --------------------------------------------------------------:|
+| **Windows Installer** | installer/JonathansBackupper_2-1.exe | Windows only, installs properly in Program Files      |
 | Windows: .exe     | dist/main.exe                   | Windows only                                                   |
 | Windows: shortcut | dist/Jonathan's Backupper(.lnk) | Windows only                                                   |
 | Windows: .bat     | dist_py/run.bat                 | **Python must be installed, windows only**                     |
