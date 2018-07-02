@@ -1,1 +1,1 @@
-{"language": "EN", "fromPath": "", "toPath": ""}
+{"language": "EN", "fromPath": "D:/Jonathan/UGent", "toPath": "D:/tmp"}

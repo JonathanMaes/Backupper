@@ -18,7 +18,7 @@ root.geometry('800x340')
 root.title('Jonathan\'s backupper')
 root.iconbitmap('icon.ico')
 root.tk_setPalette(background='gray92', foreground='black')
-root.resizable(False, False)
+# root.resizable(False, False)
 
 
 ##############################################################################
@@ -59,6 +59,8 @@ class App:
         self.top_frame.grid(row=0, sticky="ew")
         self.top_frame.grid_columnconfigure(1, weight=1) # for entry widgets to stretch horizontally
         self.center_frame.grid(row=1, sticky="nsew")
+        self.center_frame.grid_columnconfigure(0, weight=1)
+        self.center_frame.grid_rowconfigure(0, weight=1)
         self.btm_frame.grid(row=2, sticky="ew")
 
         # create the widgets for the top frame
@@ -84,10 +86,10 @@ class App:
         self.toPathBrowse.grid(row=1, column=2, padx=3, pady=3)
         
         # create the widgets for the center frame
-        self.console_log = tk.Text(self.center_frame, height=10, state='disabled', bg="white")
+        self.console_log = tk.Text(self.center_frame, state='disabled', bg="white")
         self.console_log.bind('<<Modified>>', self.scrollConsole)
         self.console_log.height = self.console_log.cget('height')
-        self.console_log.grid(row=0, column=0, sticky='we')
+        self.console_log.grid(row=0, column=0, sticky='nsew')
         self.addMessage(self.Lang['info'])
         
         self.progressbar = ttk.Progressbar(self.center_frame, orient=tk.HORIZONTAL, mode="determinate")
@@ -141,7 +143,6 @@ class App:
         self.stop_button.pack(side='left', padx=3)
         # Progress bar
         numFiles = sum([len(files) for r, d, files in os.walk(fromDirectory)])
-        root.geometry('800x360')
         self.progressbar.grid(row=1, column=0, sticky="we")
         self.progressbar["maximum"] = numFiles
         
@@ -160,7 +161,6 @@ class App:
         self.stop_button.pack_forget()
         self.start_button.config(state='normal')
         # Progress bar
-        root.geometry('800x340')
         self.progressbar.grid_forget()
         self.progressbar["value"] = 0
         # Byte history
