@@ -2,7 +2,7 @@
 
 # Jonathan's Backupper
 This is an incremental backupping program.
-You specify the folder that you want to backup, and the folder you want the place the backup in.
+You specify the folder that you want to backup, and the folder you want to place the backup in.
 **The program will then check for files that differ between both directories (i.e. have been changed since last
 backup or simply haven't been backupped yet) and copy only those.**
 
@@ -11,7 +11,6 @@ backup or simply haven't been backupped yet) and copy only those.**
 | ----------------- |-------------------------------- | --------------------------------------------------------------:|
 | **Windows Installer** | installer/JonathansBackupper_installer.exe | Windows only, installs properly in Program Files |
 | Windows: .exe     | dist/main.exe                   | Windows only                                                   |
-| Windows: shortcut | dist/Jonathan's Backupper(.lnk) | Windows only                                                   |
 | Windows: .bat     | source/run.bat                 | **Python must be installed, windows only**                      |
 | Python: .pyw      | source/main.pyw                | **Python must be installed**, run this file however you please  |
 
