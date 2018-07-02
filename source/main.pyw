@@ -2,6 +2,7 @@
 import shutil
 import win32api
 import time
+import json
 from translate import Language
 
 try:
@@ -21,8 +22,6 @@ root.resizable(False, False)
 
 
 ##############################################################################
-Lang = Language.NL
-
 class HoverButton(tk.Button):
     def __init__(self, master, **kw):
         tk.Button.__init__(self,master=master,**kw)
@@ -41,11 +40,12 @@ class HoverButton(tk.Button):
         self['foreground'] = self.defaultForeground
 
 class App:
-    def __init__(self, master):
+    def __init__(self, master, LangString='EN', fromDir = '', toDir = ''):
+        self.Lang = Language[LangString]
         self.resetStats()
         self.lastTime = 0
         self.byteHistory = [(time.time(), 0)]
-        self.doBackup = True
+        self.doBackup = False
         
         # create all of the main containers
         self.top_frame = tk.Frame(root, pady=3)
@@ -62,16 +62,18 @@ class App:
         self.btm_frame.grid(row=2, sticky="ew")
 
         # create the widgets for the top frame
-        self.fromPath_label = tk.Label(self.top_frame, text=Lang['Folder to backup'] + ': ')
-        self.toPath_label = tk.Label(self.top_frame, text=Lang['Backup to'] + ': ')
+        self.fromPath_label = tk.Label(self.top_frame, text=self.Lang['Folder to backup'] + ': ')
+        self.toPath_label = tk.Label(self.top_frame, text=self.Lang['Backup to'] + ': ')
         
         self.fromPathName = tk.StringVar()
+        self.fromPathName.set(fromDir)
         self.fromPath_entry = tk.Entry(self.top_frame, textvariable=self.fromPathName, bg="white")
-        self.fromPathBrowse = HoverButton(self.top_frame, text = Lang['Browse'], command = self.fromPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
+        self.fromPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.fromPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
         
         self.toPathName = tk.StringVar()
+        self.toPathName.set(toDir)
         self.toPath_entry = tk.Entry(self.top_frame, textvariable=self.toPathName, bg="white")
-        self.toPathBrowse = HoverButton(self.top_frame, text = Lang['Browse'], command = self.toPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
+        self.toPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.toPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
         
         # layout the widgets in the top frame
         self.fromPath_label.grid(row=0, column=0, sticky='E')
@@ -86,20 +88,43 @@ class App:
         self.console_log.bind('<<Modified>>', self.scrollConsole)
         self.console_log.height = self.console_log.cget('height')
         self.console_log.grid(row=0, column=0, sticky='we')
-        self.addMessage(Lang['Choose the folder that you want to backup, and the folder where you want the backup to be placed in.'] + '\n')
+        self.addMessage(self.Lang['info'])
         
         self.progressbar = ttk.Progressbar(self.center_frame, orient=tk.HORIZONTAL, mode="determinate")
         
         # create the widgets for the bottom frame
-        self.start_button = HoverButton(self.btm_frame, text = Lang['Start backup'], command = self.backup, bg="green2", activebackground="green4", fg="black", activeforeground="white")
-        self.stop_button = HoverButton(self.btm_frame, text = Lang['Stop backup'], command = lambda: self.endBackup(stopped=True), bg="red2", activebackground="red4", fg="black", activeforeground="white")
+        self.start_button = HoverButton(self.btm_frame, text = self.Lang['Start backup'], command = self.backup, bg="green2", activebackground="green4", fg="black", activeforeground="white")
+        self.stop_button = HoverButton(self.btm_frame, text = self.Lang['Stop backup'], command = lambda: self.endBackup(stopped=True), bg="red2", activebackground="red4", fg="black", activeforeground="white")
+        
         self.MB_text = tk.StringVar()
         self.MB_label = tk.Label(self.btm_frame, textvariable = self.MB_text)
-        self.MB_text.set(Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+        self.MB_text.set(self.Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+        
+        self.language_text = tk.StringVar()
+        self.language_text.set(LangString)
+        self.language_menu = tk.OptionMenu(self.btm_frame, self.language_text, *[lang for lang in Language])
+        self.language_menu.config(indicatoron=0)
+        self.language_text.trace('w', self.languageChanged)
+        
         
         # layout the widgets for the bottom frame
         self.start_button.pack(side='left')
+        self.language_menu.pack(side='right', padx=3)
         self.MB_label.pack(side='right')
+    
+    def reset(self):
+        self.__init__(root, getOption('language'), getOption('fromPath'), getOption('toPath'))
+    
+    def languageChanged(self, *args):
+        if self.doBackup:
+            self.language_text.set(getOption('language'))
+            self.addMessage(self.Lang['Language cant be changed whilst backupping'])
+            self.language_menu.pack()
+            root.update()
+            return None
+        options['language'] = self.language_text.get()
+        updateOptionsTxt(options)
+        self.reset()
     
     def resetStats(self):
         self.stats = {'filesCopied':0, 'bytesCopied':0, 'filesChecked':0}
@@ -109,7 +134,7 @@ class App:
         self.doBackup = True
         self.resetStats()
         # Text in console
-        self.addMessage(Lang['Preparing backup...'] + '\n', clear=True)
+        self.addMessage(self.Lang['Preparing backup...'], clear=True)
         root.update()
         # Buttons
         self.start_button.config(state='disabled')
@@ -119,16 +144,18 @@ class App:
         root.geometry('800x360')
         self.progressbar.grid(row=1, column=0, sticky="we")
         self.progressbar["maximum"] = numFiles
+        
+        self.addMessage(self.Lang['Backup started.'])
     
     def endBackup(self, error=False, stopped=False):
         self.doBackup = False
         # Text in console
         if not error:
             if stopped:
-                self.addMessage(Lang['Backup stopped.'] + '\n', clear=True)
+                self.addMessage(self.Lang['Backup stopped.'], clear=True)
             else:
-                self.addMessage(Lang['Backup complete.'] + '\n', clear=True)
-            self.addMessage(Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+                self.addMessage(self.Lang['Backup complete.'], clear=True)
+            self.addMessage(self.Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
         # Buttons
         self.stop_button.pack_forget()
         self.start_button.config(state='normal')
@@ -143,21 +170,25 @@ class App:
         self.console_log.see(tk.END)
         self.console_log.edit_modified(0)
         
-    def addMessage(self, message, clear=False):
+    def addMessage(self, message, clear=False, newline=True):
         self.console_log.config(state='normal')
         if clear:
             self.console_log.delete('1.0', tk.END)
+        message +='\n' if newline else ''
         self.console_log.insert(tk.END, message)
         self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
         self.console_log.config(state='disabled')
     
     def fromPathGet(self, dirName=None):
-        fileName = tk.filedialog.askdirectory(title = Lang['Choose the folder that you want to backup'])
+        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'])
         self.fromPathName.set(fileName)
+        setOption('fromPath', fileName)
+        
         
     def toPathGet(self, dirName=None):
-        fileName = tk.filedialog.askdirectory(title = Lang['Choose folder to place backup in'])
+        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'])
         self.toPathName.set(fileName)
+        setOption('toPath', fileName)
     
     def readableBytes(self, size):
         power, n = 2**10, 0
@@ -171,9 +202,9 @@ class App:
         shutil.copyfile(fromPath, toPath)
         shutil.copystat(fromPath, toPath)
         if renewedFile:
-            self.addMessage(Lang['File updated: '] + fromPath + '\n')
+            self.addMessage(self.Lang['File updated: '] + fromPath)
         else:
-            self.addMessage(Lang['File copied: '] + fromPath + '\n')
+            self.addMessage(self.Lang['File copied: '] + fromPath)
             
     def updateGUI(self):
         if time.time() - self.lastTime > 0.016:
@@ -181,7 +212,7 @@ class App:
             # Bytes per second calculation
             self.byteHistory.append((time.time(), self.stats['bytesCopied']))
             self.byteHistory = self.byteHistory[-60:]
-            self.MB_text.set((Lang['Copied %d files, equal to %s.'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes((self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0]))))
+            self.MB_text.set((self.Lang['Copied %d files, equal to %s.'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes((self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0]))))
             self.progressbar["value"] = self.stats['filesChecked']
             root.update()
     
@@ -191,7 +222,7 @@ class App:
         
         # Make sure the directory to backup actually exists
         if not os.path.exists(fromDirectory):
-            self.addMessage(Lang['Folder to backup'] + ' (%s)' % fromDirectory + Lang[' does not exist, so can not be backupped.'], clear=True)
+            self.addMessage(self.Lang['Folder to backup'] + ' (%s)' % fromDirectory + self.Lang[' does not exist, so can not be backupped.'], clear=True)
             self.endBackup(error=True)
             return None
         # If the directory to backup to does not exist, make it.
@@ -232,11 +263,32 @@ class App:
                 toDir = os.path.join(directoryToWriteTo, dir)
                 if not os.path.exists(toDir):
                     os.makedirs(toDir)
-                    self.addMessage(Lang['Copying folder '] + os.path.join(path, dir) + '\n')
+                    self.addMessage(self.Lang['Copying folder '] + os.path.join(path, dir))
             
             self.updateGUI()
         
         self.endBackup()
 
-app = App(root)
+def updateOptionsTxt(options):
+    with open('options.txt', 'w') as optionsFile:
+        json.dump(options, optionsFile)
+
+def setOption(optionName, value):
+    options[optionName] = value
+    updateOptionsTxt(options)
+
+def getOption(optionName):
+    return options[optionName]
+
+def resetOptionsTxt():
+    options = {'language' : 'EN', 'fromPath' : '', 'toPath' : ''}
+    updateOptionsTxt(options)
+
+if not os.path.exists('options.txt'):
+    resetOptionsTxt()
+
+with open('options.txt', 'r') as optionsFile:
+    options = json.load(optionsFile)
+
+app = App(root, options['language'], options['fromPath'], options['toPath'])
 root.mainloop()
