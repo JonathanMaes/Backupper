@@ -1,4 +1,4 @@
-[CLICK HERE TO INSTALL](../blob/master/installer/JonathansBackupper_installer.exe?raw=true)
+[CLICK HERE TO INSTALL](../master/installer/JonathansBackupper_installer.exe?raw=true)
 
 # Jonathan's Backupper
 This is an incremental backupping program.
