@@ -85,8 +85,9 @@ class App:
         self.toPath_entry.grid(row=1, column=1, sticky='EW')
         self.toPathBrowse.grid(row=1, column=2, padx=3, pady=3)
         
-        # create the widgets for the center frame
-        self.console_log = tk.Text(self.center_frame, state='disabled', bg="white")
+        # create and layout the widgets for the center frame
+        self.console_log = tk.Text(self.center_frame, state='disabled', bg="white", relief="solid", wrap=tk.WORD)
+        self.console_log.tag_config("indent", lmargin2=20)
         self.console_log.bind('<<Modified>>', self.scrollConsole)
         self.console_log.height = self.console_log.cget('height')
         self.console_log.grid(row=0, column=0, sticky='nsew')
@@ -175,7 +176,7 @@ class App:
         if clear:
             self.console_log.delete('1.0', tk.END)
         message +='\n' if newline else ''
-        self.console_log.insert(tk.END, message)
+        self.console_log.insert(tk.END, message, "indent")
         self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
         self.console_log.config(state='disabled')
     

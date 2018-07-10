@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{9AE83186-BD26-4000-ACD6-9EF66D7D4CF0}
 AppName=Jonathan's Backupper
-AppVersion=2.1
+AppVersion=2.1.2
 ;AppVerName=Jonathan's Backupper 2.1
 AppPublisher=OrOrg Development, Inc.
 AppPublisherURL=https://github.com/JonathanMaes/Backupper
