@@ -8,16 +8,17 @@ Language = {
         'Start backup' : 'Start backup',
         'Stop backup' : 'Stop backup',
         'info' : 'Choose the folder that you want to backup,\nand the folder where you want the backup to be placed in.',
-        'File updated: ' : 'File updated: ',
-        'File copied: ' : 'File copied: ',
+        'File updated: %s' : 'File updated: %s',
+        'File copied: %s' : 'File copied: %s',
         ' does not exist, so can not be backupped.' : ' does not exist, so can not be backupped.',
-        'Copying folder ' : 'Copying folder ',
+        'Copying folder %s' : 'Copying folder %s',
         'Backup complete.' : 'Backup complete.',
         'Backup stopped.' : 'Backup stopped.',
         'Copied %d files, equal to %s.' : 'Copied %d files, equal to %s.',
         'Preparing backup...' : 'Preparing backup...',
         'Backup started.' : 'Backup started.',
-        'Language cant be changed whilst backupping' : 'Language can\'t be changed whilst backupping'
+        'Language cant be changed whilst backupping' : 'Language can\'t be changed whilst backupping',
+        'ERROR: Failed to copy %s' : 'ERROR: Failed to copy %s'
     },
     'NL' : {
         'Choose folder' : 'Map kiezen',
@@ -28,15 +29,16 @@ Language = {
         'Start backup' : 'Start backup',
         'Stop backup' : 'Stop backup',
         'info' : 'Kies de map die u wil backuppen,\nen de map waar u de backup in wil plaatsen.',
-        'File updated: ' : 'Bestand geüpdatet: ',
-        'File copied: ' : 'Bestand gekopieerd: ',
+        'File updated: %s' : 'Bestand geüpdatet: %s',
+        'File copied: %s' : 'Bestand gekopieerd: %s',
         ' does not exist, so can not be backupped.' : ' bestaat niet, dus kan niet gebackupt worden.',
-        'Copying folder ' : 'Map kopiëren: \t\t',
+        'Copying folder %s' : 'Map kopiëren: %s',
         'Backup complete.' : 'Backup compleet.',
         'Backup stopped.' : 'Backup gestopt.',
         'Copied %d files, equal to %s.' : '%d bestanden gekopiëerd, in totaal %s.',
         'Preparing backup...' : 'Backup voorbereiden...',
         'Backup started.' : 'Backup gestart.',
-        'Language cant be changed whilst backupping' : 'Taal kan niet veranderd worden tijdens het backuppen!'
+        'Language cant be changed whilst backupping' : 'Taal kan niet veranderd worden tijdens het backuppen!',
+        'ERROR: Failed to copy %s' : 'ERROR: Kan %s niet kopiëren'
     }
 }

@@ -5,14 +5,21 @@ import time
 import json
 from translate import Language
 
+import traceback
+
 try:
-    import Tkinter as tk
-    from Tkinter import ttk
-    import Tkinter.filedialog
-except:
+    # Python 3.x
     import tkinter as tk
     from tkinter import ttk
+    from tkinter.messagebox import showerror
     import tkinter.filedialog
+except:
+    # Python 2.x
+    import Tkinter as tk
+    from Tkinter import ttk
+    from tkMessageBox import showerror
+    import Tkinter.filedialog
+
 root = tk.Tk()
 root.geometry('800x340')
 root.title('Jonathan\'s backupper')
@@ -39,22 +46,38 @@ class HoverButton(tk.Button):
         self['background'] = self.defaultBackground
         self['foreground'] = self.defaultForeground
 
-class App:
+class App(tk.Frame):
     def __init__(self, master, LangString='EN', fromDir = '', toDir = ''):
-        self.Lang = Language[LangString]
+        super().__init__()
+        
+        master.report_callback_exception = self.report_callback_exception
+        
+        self.master = master
+        self.Lang = {**Language['EN'], **Language[LangString]}
         self.resetStats()
         self.lastTime = 0
         self.byteHistory = [(time.time(), 0)]
         self.doBackup = False
         
+        ## menubar testing
+        '''self.menubar = tk.Menu(self.master)
+        self.master.config(menu=self.menubar)
+        
+        self.fileMenu = tk.Menu(self.menubar)
+        self.fileMenu.add_command(label="Exit", command=lambda:self.quit())
+        self.toggleVar = 0
+        self.fileMenu.add_checkbutton(label="Toggle",variable=self.toggleVar)
+        self.menubar.add_cascade(label="File", menu=self.fileMenu)'''
+        ## end of menubar testing
+        
         # create all of the main containers
-        self.top_frame = tk.Frame(root, pady=3)
-        self.center_frame = tk.Frame(root, pady=3)
-        self.btm_frame = tk.Frame(root, pady=3, padx=3)
+        self.top_frame = tk.Frame(master, pady=3)
+        self.center_frame = tk.Frame(master, pady=3)
+        self.btm_frame = tk.Frame(master, pady=3, padx=3)
 
         # layout all of the main containers
-        root.grid_rowconfigure(1, weight=1)
-        root.grid_columnconfigure(0, weight=1)
+        self.master.grid_rowconfigure(1, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
 
         self.top_frame.grid(row=0, sticky="ew")
         self.top_frame.grid_columnconfigure(1, weight=1) # for entry widgets to stretch horizontally
@@ -114,6 +137,14 @@ class App:
         self.start_button.pack(side='left')
         self.language_menu.pack(side='right', padx=3)
         self.MB_label.pack(side='right')
+    
+    def report_callback_exception(self, *args):
+        err = traceback.format_exception(*args)
+        # since traceback.format_exception returns a list with each element being one line of the exception format, concatenate them
+        formatted = ''
+        for line in err:
+            formatted += line
+        showerror('An ERROR has occured.', formatted)
     
     def reset(self):
         self.__init__(root, getOption('language'), getOption('fromPath'), getOption('toPath'))
@@ -200,12 +231,17 @@ class App:
         return '%.2f %sB' % (size, Dic_powerN[n])
         
     def copyfile(self, fromPath, toPath, renewedFile=True):
-        shutil.copyfile(fromPath, toPath)
-        shutil.copystat(fromPath, toPath)
+        try:
+            shutil.copyfile(fromPath, toPath)
+            shutil.copystat(fromPath, toPath)
+        except:
+            self.addMessage(self.Lang['ERROR: Failed to copy %s'] % fromPath)
+            return
+        
         if renewedFile:
-            self.addMessage(self.Lang['File updated: '] + fromPath)
+            self.addMessage(self.Lang['File updated: %s'] % fromPath)
         else:
-            self.addMessage(self.Lang['File copied: '] + fromPath)
+            self.addMessage(self.Lang['File copied: %s'] % fromPath)
             
     def updateGUI(self):
         if time.time() - self.lastTime > 0.016:
@@ -240,6 +276,7 @@ class App:
             # Copy the files in this directory
             for filename in files:
                 if not self.doBackup:
+                    # If button 'stop backup' is pressed, stop the backup by exiting this function.
                     return None
                 self.stats['filesChecked'] += 1
                 pathName = os.path.join(path,filename)
@@ -264,7 +301,7 @@ class App:
                 toDir = os.path.join(directoryToWriteTo, dir)
                 if not os.path.exists(toDir):
                     os.makedirs(toDir)
-                    self.addMessage(self.Lang['Copying folder '] + os.path.join(path, dir))
+                    self.addMessage(self.Lang['Copying folder %s'] % os.path.join(path, dir))
             
             self.updateGUI()
         
