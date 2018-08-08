@@ -145,6 +145,7 @@ class App(tk.Frame):
         for line in err:
             formatted += line
         showerror('An ERROR has occured.', formatted)
+        self.doBackup = False
     
     def reset(self):
         self.__init__(root, getOption('language'), getOption('fromPath'), getOption('toPath'))
@@ -213,14 +214,16 @@ class App(tk.Frame):
     
     def fromPathGet(self, dirName=None):
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'])
-        self.fromPathName.set(fileName)
-        setOption('fromPath', fileName)
+        if fileName != None:
+            self.fromPathName.set(fileName)
+            setOption('fromPath', fileName)
         
         
     def toPathGet(self, dirName=None):
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'])
-        self.toPathName.set(fileName)
-        setOption('toPath', fileName)
+        if fileName != None:
+            self.toPathName.set(fileName)
+            setOption('toPath', fileName)
     
     def readableBytes(self, size):
         power, n = 2**10, 0
@@ -234,6 +237,8 @@ class App(tk.Frame):
         try:
             shutil.copyfile(fromPath, toPath)
             shutil.copystat(fromPath, toPath)
+            self.stats['filesCopied'] += 1
+            self.stats['bytesCopied'] += os.path.getsize(fromPath)
         except:
             self.addMessage(self.Lang['ERROR: Failed to copy %s'] % fromPath)
             return
@@ -280,23 +285,20 @@ class App(tk.Frame):
                     return None
                 self.stats['filesChecked'] += 1
                 pathName = os.path.join(path,filename)
-                backupPathName = toDirectory + pathName.split(fromDirectory)[-1]
+                # Prevent issues whith / or \ (error occurs when backupping whole D:/ or C:/ disk)
+                backupPathName = toDirectory + pathName.split(fromDirectory.strip('\\/ '))[-1]
                 
                 # If the file does not yet exist in the backup directory
                 if not os.path.exists(backupPathName):
                     self.copyfile(pathName, backupPathName, False)
-                    self.stats['filesCopied'] += 1
-                    self.stats['bytesCopied'] += os.path.getsize(pathName)
                 # If the file in the backup directory is older than the original
                 elif os.path.getmtime(pathName) > os.path.getmtime(backupPathName):
                     self.copyfile(pathName, backupPathName)
-                    self.stats['filesCopied'] += 1
-                    self.stats['bytesCopied'] += os.path.getsize(pathName)
                 
                 self.updateGUI()
             
             # If the directories in this directory's backup do not exist already, make them
-            directoryToWriteTo = toDirectory + path.split(fromDirectory)[-1]  # The toDirectory location of this particular directory
+            directoryToWriteTo = toDirectory + path.split(fromDirectory.strip('\\/ '))[-1]  # The toDirectory location of this particular directory
             for dir in dirs:
                 toDir = os.path.join(directoryToWriteTo, dir)
                 if not os.path.exists(toDir):
