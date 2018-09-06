@@ -1,11 +1,13 @@
+#define ApplicationVersion GetFileVersion('dist/main.exe')
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{9AE83186-BD26-4000-ACD6-9EF66D7D4CF0}
 AppName=Jonathan's Backupper
-AppVersion=2.2
-;AppVerName=Jonathan's Backupper 2.2
+AppVersion={#ApplicationVersion}
+VersionInfoVersion={#ApplicationVersion}
 AppPublisher=OrOrg Development, Inc.
 AppPublisherURL=https://github.com/JonathanMaes/Backupper
 AppSupportURL=https://github.com/JonathanMaes/Backupper/issues
@@ -15,7 +17,7 @@ DefaultGroupName=Jonathan's Backupper
 AllowNoIcons=yes
 LicenseFile=LICENSE
 OutputDir=installer
-OutputBaseFilename=JonathansBackupper_installer
+OutputBaseFilename="JonathansBackupper_installer_{#ApplicationVersion}"
 SetupIconFile=dist\icon.ico
 Compression=lzma
 SolidCompression=yes       

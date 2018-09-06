@@ -4,9 +4,11 @@ block_cipher = None
 
 
 a = Analysis(['main.pyw'],
-             pathex=['D:\\Jonathan\\PROJECTS\\Python\\Backupper\\source'],
+             pathex=['..'],
              binaries=[],
-             datas=[('icon.ico', '.')],
+             datas=[('data/', 'data'),
+                    ('changelog.txt', '.'),
+                    ('data/icon.ico', '.'],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -23,7 +25,7 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=False , icon='icon.ico')
+          console=False , icon='data/icon.ico', version='data/version.py')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

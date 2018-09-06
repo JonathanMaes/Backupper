@@ -14,8 +14,8 @@ Language = {
         'Copying folder %s' : 'Copying folder %s',
         'Backup complete.' : 'Backup complete.',
         'Backup stopped.' : 'Backup stopped.',
-        'Copied %d files, equal to %s.' : 'Copied %d files, equal to %s.',
-        'Preparing backup...' : 'Preparing backup...',
+        '_filesCopiedInfo' : 'Copied %d files, equal to %s.',
+        'Preparing backup...' : 'Preparing backup...\nThis may take several minutes, depending on the size of the backup.',
         'Backup started.' : 'Backup started.',
         'Language cant be changed whilst backupping' : 'Language can\'t be changed whilst backupping',
         'ERROR: Failed to copy %s' : 'ERROR: Failed to copy %s'
@@ -35,8 +35,8 @@ Language = {
         'Copying folder %s' : 'Map kopiëren: %s',
         'Backup complete.' : 'Backup compleet.',
         'Backup stopped.' : 'Backup gestopt.',
-        'Copied %d files, equal to %s.' : '%d bestanden gekopiëerd, in totaal %s.',
-        'Preparing backup...' : 'Backup voorbereiden...',
+        '_filesCopiedInfo' : '%d bestanden gekopiëerd, in totaal %s.',
+        'Preparing backup...' : 'Backup voorbereiden...\nDit kan enkele minuten duren, afhankelijk van de grootte van de backup.',
         'Backup started.' : 'Backup gestart.',
         'Language cant be changed whilst backupping' : 'Taal kan niet veranderd worden tijdens het backuppen!',
         'ERROR: Failed to copy %s' : 'ERROR: Kan %s niet kopiëren'

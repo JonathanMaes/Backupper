@@ -1,0 +1,46 @@
+2.2.2
+Bugfixes
+* When opening a file dialog, the currently selected folder is shown instead of the last-viewed one
+B-2A : Clicking 'Cancel' in folder selection dialog 'deselects' currently selected folder
+B-4A : When opening a file dialog, the last-viewed folder is shown instead of the currently selected one
+---
+v2.2.1
+Bugfix
+B-3D : Backup creates wrong folders when backupping an entire disk, like D:/ or F:/
+---
+2.2.0
+Error handling
++ A new window will open when an crash occurs, displaying the error message.
+* Installer will now check whether the program is already installed, and act accordingly.
+B-1C : Backup stops when an error occurs during the copying of a file
+---
+2.1.2
+Console improvements
+* Console now properly wraps words instead of cutting words in the middle
+* Console indents wrapped lines
+---
+2.1.1
+Readme update
+* Information in Readme file has been updated to suit current version
+---
+2.1.0
+Installer and languages
++ Installer to properly install the program on windows
++ Language can now be changed using a button in the bottom right corner
+---
+2.0.0
+GUI update
+* Command line UI swapped for a proper GUI
+---
+1.0.0
+Command line UI
++ Initial release
+
+Bugs:
+A: Minor inconvenience
+B: Major inconvenience
+C: Program crashes, or stops working
+D: Damage inflicted to the file system
+
+Known bugs:
+/

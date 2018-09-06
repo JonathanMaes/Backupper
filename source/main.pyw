@@ -1,4 +1,15 @@
-﻿import os
+﻿# TO DO:
+# * Move the total copied size to the progress bar: <bytes_copied>/<total_bytes>
+#   And make the progress bar dependent on the number of bytes processed instead of the number of files
+#   Problem is: this will further increase the time needed to 'initialize backup' by a factor of 7
+# * Split the text at the bottom, that says how many files are copied, to:
+#   <n> files copied, <errors> errors encountered \n (<bytes per second>), approximately <time> remaining.
+# * Add two checkboxes next to the 'Stop backup' button:
+#    one with 'Show Error messages', default 'true' (save edits in options)
+#    another below with 'Show log of copied files', default 'false'
+
+
+import os
 import shutil
 import win32api
 import time
@@ -14,16 +25,12 @@ try:
     from tkinter.messagebox import showerror
     import tkinter.filedialog
 except:
-    # Python 2.x
-    import Tkinter as tk
-    from Tkinter import ttk
-    from tkMessageBox import showerror
-    import Tkinter.filedialog
+    raise ImportError('Python 3 (tkinter) is needed to run this program, but is not found.')
 
 root = tk.Tk()
 root.geometry('800x340')
 root.title('Jonathan\'s backupper')
-root.iconbitmap('icon.ico')
+root.iconbitmap('data/icon.ico')
 root.tk_setPalette(background='gray92', foreground='black')
 # root.resizable(False, False)
 
@@ -50,7 +57,10 @@ class App(tk.Frame):
     def __init__(self, master, LangString='EN', fromDir = '', toDir = ''):
         super().__init__()
         
+        # When an error occurs, do a custom thing
         master.report_callback_exception = self.report_callback_exception
+        # When the root window is resized, call self.windowResized
+        master.bind( "<Configure>", self.windowResized)
         
         self.master = master
         self.Lang = {**Language['EN'], **Language[LangString]}
@@ -113,8 +123,9 @@ class App(tk.Frame):
         self.console_log.tag_config("indent", lmargin2=20)
         self.console_log.bind('<<Modified>>', self.scrollConsole)
         self.console_log.height = self.console_log.cget('height')
+        self.console_log.fontSize = 10
+        self.console_log.config(font=("Courier", self.console_log.fontSize))
         self.console_log.grid(row=0, column=0, sticky='nsew')
-        self.addMessage(self.Lang['info'])
         
         self.progressbar = ttk.Progressbar(self.center_frame, orient=tk.HORIZONTAL, mode="determinate")
         
@@ -124,7 +135,7 @@ class App(tk.Frame):
         
         self.MB_text = tk.StringVar()
         self.MB_label = tk.Label(self.btm_frame, textvariable = self.MB_text)
-        self.MB_text.set(self.Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+        self.MB_text.set(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
         
         self.language_text = tk.StringVar()
         self.language_text.set(LangString)
@@ -137,6 +148,15 @@ class App(tk.Frame):
         self.start_button.pack(side='left')
         self.language_menu.pack(side='right', padx=3)
         self.MB_label.pack(side='right')
+        
+        root.update()
+        
+        # Message after root.update() since otherwise self.console_log.winfo_height() is incorrect and deletes multiline messages
+        self.addMessage(self.Lang['info'])
+    
+    def windowResized(self, event):
+        # Since we always read from the .height property, we need to update it accordingly
+        self.console_log.height = (self.console_log.winfo_height()/2)//self.console_log.fontSize
     
     def report_callback_exception(self, *args):
         err = traceback.format_exception(*args)
@@ -189,7 +209,7 @@ class App(tk.Frame):
                 self.addMessage(self.Lang['Backup stopped.'], clear=True)
             else:
                 self.addMessage(self.Lang['Backup complete.'], clear=True)
-            self.addMessage(self.Lang['Copied %d files, equal to %s.'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+            self.addMessage(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
         # Buttons
         self.stop_button.pack_forget()
         self.start_button.config(state='normal')
@@ -213,15 +233,15 @@ class App(tk.Frame):
         self.console_log.config(state='disabled')
     
     def fromPathGet(self, dirName=None):
-        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'])
-        if fileName != None:
+        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'], initialdir=self.fromPathName.get())
+        if fileName:
             self.fromPathName.set(fileName)
             setOption('fromPath', fileName)
         
         
     def toPathGet(self, dirName=None):
-        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'])
-        if fileName != None:
+        fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'], initialdir=self.toPathName.get())
+        if fileName:
             self.toPathName.set(fileName)
             setOption('toPath', fileName)
     
@@ -254,7 +274,7 @@ class App(tk.Frame):
             # Bytes per second calculation
             self.byteHistory.append((time.time(), self.stats['bytesCopied']))
             self.byteHistory = self.byteHistory[-60:]
-            self.MB_text.set((self.Lang['Copied %d files, equal to %s.'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes((self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0]))))
+            self.MB_text.set((self.Lang['_filesCopiedInfo'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes((self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0]))))
             self.progressbar["value"] = self.stats['filesChecked']
             root.update()
     
@@ -310,7 +330,7 @@ class App(tk.Frame):
         self.endBackup()
 
 def updateOptionsTxt(options):
-    with open('options.txt', 'w') as optionsFile:
+    with open('options.json', 'w') as optionsFile:
         json.dump(options, optionsFile)
 
 def setOption(optionName, value):
@@ -324,10 +344,10 @@ def resetOptionsTxt():
     options = {'language' : 'EN', 'fromPath' : '', 'toPath' : ''}
     updateOptionsTxt(options)
 
-if not os.path.exists('options.txt'):
+if not os.path.exists('options.json'):
     resetOptionsTxt()
 
-with open('options.txt', 'r') as optionsFile:
+with open('options.json', 'r') as optionsFile:
     options = json.load(optionsFile)
 
 app = App(root, options['language'], options['fromPath'], options['toPath'])
