@@ -1,4 +1,5 @@
 2.2.3
+High DPI improvement
 * Fixed blurry text on high DPI screens
 ---
 2.2.2
