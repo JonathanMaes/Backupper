@@ -7,6 +7,7 @@
 # * Add two checkboxes next to the 'Stop backup' button:
 #    one with 'Show Error messages', default 'true' (save edits in options)
 #    another below with 'Show log of copied files', default 'false'
+# * Add option 'Add to Start Menu' to installer
 
 
 import os
@@ -14,6 +15,7 @@ import shutil
 import win32api
 import time
 import json
+import ctypes
 from translate import Language
 
 import traceback
@@ -25,51 +27,51 @@ try:
     from tkinter.messagebox import showerror
     import tkinter.filedialog
 except:
-    raise ImportError('Python 3 (tkinter) is needed to run this program, but is not found.')
-
-root = tk.Tk()
-root.geometry('800x340')
-root.title('Jonathan\'s backupper')
-root.iconbitmap('data/icon.ico')
-root.tk_setPalette(background='gray92', foreground='black')
-# root.resizable(False, False)
+    raise ImportError('Python 3 (tkinter) is needed to run %s, but is not found.' % __name__)
 
 
 ##############################################################################
 class HoverButton(tk.Button):
     def __init__(self, master, **kw):
         tk.Button.__init__(self,master=master,**kw)
-        self.defaultBackground = self["background"]
-        self.defaultForeground = self["foreground"]
+        self.defaultBackground = self.cget("background")
+        self.defaultForeground = self.cget("foreground")
         self.bind("<Enter>", self.on_enter)
         self.bind("<Leave>", self.on_leave)
 
     def on_enter(self, e):
-        if not self["state"] == "disabled":
-            self['background'] = self['activebackground']
-            self['foreground'] = self['activeforeground']
+        if not self.cget("state") == "disabled":
+            self.config(background=self.cget('activebackground'))
+            self.config(foreground=self.cget('activeforeground'))
 
     def on_leave(self, e):
-        self['background'] = self.defaultBackground
-        self['foreground'] = self.defaultForeground
+        self.config(background=self.defaultBackground)
+        self.config(foreground=self.defaultForeground)
 
 class App(tk.Frame):
-    def __init__(self, master, LangString='EN', fromDir = '', toDir = ''):
-        super().__init__()
+    def __init__(self, master, options):
+        self.options = options
         
-        # When an error occurs, do a custom thing
+        super().__init__()
+
+        # Set DPI Awareness to fix blurry app on high DPI screens
+        ctypes.windll.shcore.SetProcessDpiAwareness(1) # Windows 10/8
+        ctypes.windll.user32.SetProcessDPIAware() # Windows 7/Vista
+        
+        # When an error occurs, open a custom window displaying the error
         master.report_callback_exception = self.report_callback_exception
-        # When the root window is resized, call self.windowResized
-        master.bind( "<Configure>", self.windowResized)
+
+        # When the root window is resized, call self.windowResized, this updates all widgets accordingly
+        master.bind("<Configure>", self.windowResized)
         
         self.master = master
-        self.Lang = {**Language['EN'], **Language[LangString]}
+        self.Lang = {**Language['EN'], **Language[self.options.get('language')]} # Merge English and selected language dicts to fill in untranslated strings
         self.resetStats()
         self.lastTime = 0
         self.byteHistory = [(time.time(), 0)]
         self.doBackup = False
         
-        ## menubar testing
+        ## menubar test
         '''self.menubar = tk.Menu(self.master)
         self.master.config(menu=self.menubar)
         
@@ -78,7 +80,7 @@ class App(tk.Frame):
         self.toggleVar = 0
         self.fileMenu.add_checkbutton(label="Toggle",variable=self.toggleVar)
         self.menubar.add_cascade(label="File", menu=self.fileMenu)'''
-        ## end of menubar testing
+        ## end menubar test
         
         # create all of the main containers
         self.top_frame = tk.Frame(master, pady=3)
@@ -101,12 +103,12 @@ class App(tk.Frame):
         self.toPath_label = tk.Label(self.top_frame, text=self.Lang['Backup to'] + ': ')
         
         self.fromPathName = tk.StringVar()
-        self.fromPathName.set(fromDir)
+        self.fromPathName.set(self.options.get('fromPath'))
         self.fromPath_entry = tk.Entry(self.top_frame, textvariable=self.fromPathName, bg="white")
         self.fromPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.fromPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
         
         self.toPathName = tk.StringVar()
-        self.toPathName.set(toDir)
+        self.toPathName.set(self.options.get('toPath'))
         self.toPath_entry = tk.Entry(self.top_frame, textvariable=self.toPathName, bg="white")
         self.toPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.toPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
         
@@ -138,10 +140,10 @@ class App(tk.Frame):
         self.MB_text.set(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
         
         self.language_text = tk.StringVar()
-        self.language_text.set(LangString)
+        self.language_text.set(self.options.get('language'))
         self.language_menu = tk.OptionMenu(self.btm_frame, self.language_text, *[lang for lang in Language])
         self.language_menu.config(indicatoron=0)
-        self.language_text.trace('w', self.languageChanged)
+        self.language_text.trace('w', self.languageChanged) # if the language is changed, this variable changes, so call self.languageChanged for further configurations
         
         
         # layout the widgets for the bottom frame
@@ -151,41 +153,63 @@ class App(tk.Frame):
         
         root.update()
         
-        # Message after root.update() since otherwise self.console_log.winfo_height() is incorrect and deletes multiline messages
+        # Display this message after root.update(), since otherwise
+        # self.console_log.winfo_height() is still default 0 and the
+        # message will thus be deleted by the addMessage function
         self.addMessage(self.Lang['info'])
+        
+        # Start interactivity
+        master.mainloop()
     
     def windowResized(self, event):
+        ''' 
+            Handles everything that needs to be done when the window is resized,
+            for example changing the number of lines displayed in the console 
+        '''
         # Since we always read from the .height property, we need to update it accordingly
         self.console_log.height = (self.console_log.winfo_height()/2)//self.console_log.fontSize
     
     def report_callback_exception(self, *args):
-        err = traceback.format_exception(*args)
-        # since traceback.format_exception returns a list with each element being one line of the exception format, concatenate them
-        formatted = ''
-        for line in err:
-            formatted += line
-        showerror('An ERROR has occured.', formatted)
+        '''
+            Function gets called when an exception occurs in Python itself.
+            Since the console is invisible, the error is displayed in a custom window.
+        '''
+        # traceback.format_exception returns a list of strings, each being one line of the exception output,
+        # so they are concatenated with ''.join
+        showerror('An ERROR has occured.', ''.join(traceback.format_exception(*args)))
+        # Since an error occured, the backup should be 'properly' stopped as well
         self.doBackup = False
     
     def reset(self):
-        self.__init__(root, getOption('language'), getOption('fromPath'), getOption('toPath'))
+        ''' Resets the App by re-__init__ializing '''
+        self.__init__(root, self.options)
     
     def languageChanged(self, *args):
+        ''' Resets the App, using the new language '''
         if self.doBackup:
-            self.language_text.set(getOption('language'))
+            # Since the method to change the language is simply to reset the app,
+            # it is not possible to change the language whilst backupping.
+            self.language_text.set(self.options.get('language')) # Resets the language label to the one before the user tried to change it
             self.addMessage(self.Lang['Language cant be changed whilst backupping'])
             self.language_menu.pack()
             root.update()
             return None
-        options['language'] = self.language_text.get()
-        updateOptionsTxt(options)
+        self.options.set('language', self.language_text.get(), saveFile=True)
         self.reset()
     
     def resetStats(self):
+        ''' Resets the backup stats variable: self.stats '''
         self.stats = {'filesCopied':0, 'bytesCopied':0, 'filesChecked':0}
         self.lastTime = time.time()
     
     def initializeBackup(self, fromDirectory):
+        ''' 
+            Does everything that needs to be done before the backup starts
+            - sets self.doBackup to True
+            - resets the backup stats (files copied, bytes copied...)
+            - changes appearance of start and stop buttons
+            - shows progress bar and sets its maximum
+        '''
         self.doBackup = True
         self.resetStats()
         # Text in console
@@ -197,11 +221,17 @@ class App(tk.Frame):
         # Progress bar
         numFiles = sum([len(files) for r, d, files in os.walk(fromDirectory)])
         self.progressbar.grid(row=1, column=0, sticky="we")
-        self.progressbar["maximum"] = numFiles
+        self.progressbar.config(maximum=numFiles)
         
         self.addMessage(self.Lang['Backup started.'])
     
     def endBackup(self, error=False, stopped=False):
+        ''' 
+            Does everything that needs to be done to properly stop the backup 
+            - sets self.doBackup to False
+            - if there was no error, say that everything was good
+            - regardless of errors, reset the buttons and progressbar etc.
+        '''
         self.doBackup = False
         # Text in console
         if not error:
@@ -215,15 +245,21 @@ class App(tk.Frame):
         self.start_button.config(state='normal')
         # Progress bar
         self.progressbar.grid_forget()
-        self.progressbar["value"] = 0
-        # Byte history
+        self.progressbar.config(value=0)
+        # Byte history for bytes/second measurement
         self.byteHistory = [(time.time(), 0)]
     
     def scrollConsole(self, x):
+        ''' Scrolls the console to the end '''
         self.console_log.see(tk.END)
         self.console_log.edit_modified(0)
         
     def addMessage(self, message, clear=False, newline=True):
+        ''' 
+            Adds a new line to the self.console_log widget.
+            This is not as easy as just adding a line: the Text widget must be
+            enabled, then disabled, and out-of-sight lines deleted.
+        '''
         self.console_log.config(state='normal')
         if clear:
             self.console_log.delete('1.0', tk.END)
@@ -233,19 +269,22 @@ class App(tk.Frame):
         self.console_log.config(state='disabled')
     
     def fromPathGet(self, dirName=None):
+        ''' Shows a dialog to choose the directory to backup '''
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'], initialdir=self.fromPathName.get())
         if fileName:
             self.fromPathName.set(fileName)
-            setOption('fromPath', fileName)
+            self.options.set('fromPath', fileName)
         
         
     def toPathGet(self, dirName=None):
+        ''' Shows a dialog to choose the directory to place the backup in '''
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'], initialdir=self.toPathName.get())
         if fileName:
             self.toPathName.set(fileName)
-            setOption('toPath', fileName)
+            self.options.set('toPath', fileName)
     
     def readableBytes(self, size):
+        ''' Converts an int to a string displaying kB, MB, GB, TB... '''
         power, n = 2**10, 0
         Dic_powerN = {0 : '', 1: 'k', 2: 'M', 3: 'G', 4: 'T'}
         while size > power:
@@ -254,6 +293,10 @@ class App(tk.Frame):
         return '%.2f %sB' % (size, Dic_powerN[n])
         
     def copyfile(self, fromPath, toPath, renewedFile=True):
+        ''' 
+            Copies a file. Updates backup stats accordingly and catches copy-
+            errors. Displays a corresponding message in self.console_log. 
+        '''
         try:
             shutil.copyfile(fromPath, toPath)
             shutil.copystat(fromPath, toPath)
@@ -267,8 +310,13 @@ class App(tk.Frame):
             self.addMessage(self.Lang['File updated: %s'] % fromPath)
         else:
             self.addMessage(self.Lang['File copied: %s'] % fromPath)
-            
+    
     def updateGUI(self):
+        ''' Redraws the GUI.
+            Also updates the bytesHistory list, which holds the total amount
+            of bytes copied at each updateGUI call, and calculates the bytes/s
+            using the self.lastTime variable to calculate the elapsed time.
+        '''
         if time.time() - self.lastTime > 0.016:
             self.lastTime = time.time()
             # Bytes per second calculation
@@ -279,6 +327,7 @@ class App(tk.Frame):
             root.update()
     
     def backup(self):
+        ''' The main function that is called when 'start backup' is pressed '''
         fromDirectory = self.fromPathName.get()
         toDirectory = self.toPathName.get()
         
@@ -329,26 +378,49 @@ class App(tk.Frame):
         
         self.endBackup()
 
-def updateOptionsTxt(options):
-    with open('options.json', 'w') as optionsFile:
-        json.dump(options, optionsFile)
 
-def setOption(optionName, value):
-    options[optionName] = value
-    updateOptionsTxt(options)
+class Options():
+    def __init__(self, file='options.json'):
+        self.file = file
+        if not os.path.exists(self.file):
+            self.reset()
+        else:
+            with open(self.file, 'r') as optionsFile:
+                self.options = json.load(optionsFile)
+    
+    def updateFile(self):
+        ''' Writes the options dictionary to a json file to remember the settings '''
+        with open(self.file, 'w') as optionsFile:
+            json.dump(self.options, optionsFile)
 
-def getOption(optionName):
-    return options[optionName]
+    def set(self, optionName, value, saveFile=False):
+        ''' 
+            Changes one of the settings, including:
+            - language : EN or NL
+            - fromPath : the path to backup
+            - toPath : the path to place the backup in
+        '''
+        self.options[optionName] = value
+        self.updateFile()
 
-def resetOptionsTxt():
-    options = {'language' : 'EN', 'fromPath' : '', 'toPath' : ''}
-    updateOptionsTxt(options)
+    def get(self, optionName):
+        ''' Gets the specified options value '''
+        return self.options[optionName]
 
-if not os.path.exists('options.json'):
-    resetOptionsTxt()
+    def reset(self):
+        ''' Resets all options to the default settings '''
+        self.options = {'language' : 'EN', 'fromPath' : '', 'toPath' : ''}
+        self.updateFile()
 
-with open('options.json', 'r') as optionsFile:
-    options = json.load(optionsFile)
 
-app = App(root, options['language'], options['fromPath'], options['toPath'])
-root.mainloop()
+if __name__ == '__main__':
+    root = tk.Tk()
+    screen_width, screen_height = root.winfo_screenwidth(), root.winfo_screenheight()
+    # Set width, height of window, and position of upper left corner on screen
+    root.geometry('%dx%d+%d+%d' % (screen_width//2, screen_height//3, screen_width//4, screen_height//3))
+    root.title('Jonathan\'s backupper')
+    root.iconbitmap('data/icon.ico')
+    root.tk_setPalette(background='gray92', foreground='black')
+    root.resizable(True, True)
+
+    app = App(root, Options())
