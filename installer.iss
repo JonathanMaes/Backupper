@@ -42,3 +42,6 @@ Name: "{commondesktop}\Jonathan's Backupper"; Filename: "{app}\main.exe"; Tasks:
 
 [Run]
 Filename: "{app}\main.exe"; Description: "{cm:LaunchProgram,Jonathan's Backupper}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: files; Name: "{userappdata}\Jonathan's Backupper\options.json"

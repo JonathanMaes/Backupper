@@ -1,3 +1,8 @@
+2.2.4
+Fixed options.json permission error
+* The file options.json has been moved, so that it can now be accessed programmatically.
+* To- and from-file now update when typing manually in the textbox
+---
 2.2.3
 High DPI improvement
 * Fixed blurry text on high DPI screens

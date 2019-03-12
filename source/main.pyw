@@ -68,6 +68,7 @@ class App(tk.Frame):
 
         # When the root window is resized, call self.windowResized, this updates all widgets accordingly
         master.bind("<Configure>", self.windowResized)
+        master.bind("<Key>", self.updatePaths)
         
         self.master = master
         self.Lang = {**Language['EN'], **Language[self.options.get('language')]} # Merge English and selected language dicts to fill in untranslated strings
@@ -109,12 +110,12 @@ class App(tk.Frame):
         
         self.fromPathName = tk.StringVar()
         self.fromPathName.set(self.options.get('fromPath'))
-        self.fromPath_entry = tk.Entry(self.top_frame, textvariable=self.fromPathName, bg="white")
-        self.fromPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.fromPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
-        
         self.toPathName = tk.StringVar()
         self.toPathName.set(self.options.get('toPath'))
-        self.toPath_entry = tk.Entry(self.top_frame, textvariable=self.toPathName, bg="white")
+
+        self.fromPath_entry = tk.Entry(self.top_frame, textvariable=self.fromPathName, bg="white", validate="all", validatecommand=self.updatePaths)
+        self.fromPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.fromPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
+        self.toPath_entry = tk.Entry(self.top_frame, textvariable=self.toPathName, bg="white", validate="all", validatecommand=self.updatePaths)
         self.toPathBrowse = HoverButton(self.top_frame, text = self.Lang['Choose folder'], command = self.toPathGet, bg="grey82", activebackground="grey72", fg="black", activeforeground="black")
         
         # layout the widgets in the top frame
@@ -273,6 +274,10 @@ class App(tk.Frame):
         self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
         self.console_log.config(state='disabled')
     
+    def updatePaths(self, *args, **kwargs):
+        self.options.set('fromPath', self.fromPathName.get())
+        self.options.set('toPath', self.toPathName.get())
+
     def fromPathGet(self, dirName=None):
         ''' Shows a dialog to choose the directory to backup '''
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'], initialdir=self.fromPathName.get())
@@ -386,7 +391,10 @@ class App(tk.Frame):
 
 class Options():
     def __init__(self, file='options.json'):
-        self.file = file
+        self.appdataDirectory = os.path.expandvars("%APPDATA%\\Jonathan's Backupper")
+        self.file = os.path.join(self.appdataDirectory, file)
+        if not os.path.exists(self.appdataDirectory):
+            os.makedirs(self.appdataDirectory)
         if not os.path.exists(self.file):
             self.reset()
         else:
