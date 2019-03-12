@@ -55,8 +55,13 @@ class App(tk.Frame):
         super().__init__()
 
         # Set DPI Awareness to fix blurry app on high DPI screens
-        ctypes.windll.shcore.SetProcessDpiAwareness(1) # Windows 10/8
-        ctypes.windll.user32.SetProcessDPIAware() # Windows 7/Vista
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1) # Windows 10/8
+        except:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware() # Windows 7/Vista
+            except:
+                pass
         
         # When an error occurs, open a custom window displaying the error
         master.report_callback_exception = self.report_callback_exception
