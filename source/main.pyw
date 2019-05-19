@@ -182,7 +182,8 @@ class App(tk.Frame):
         '''
         # traceback.format_exception returns a list of strings, each being one line of the exception output,
         # so they are concatenated with ''.join
-        showerror('An ERROR has occured.', ''.join(traceback.format_exception(*args)))
+        etype, value, tb = args
+        showerror('An ERROR has occured.', ''.join(traceback.format_exception(etype, value, tb)))
         # Since an error occured, the backup should be 'properly' stopped as well
         self.doBackup = False
     
