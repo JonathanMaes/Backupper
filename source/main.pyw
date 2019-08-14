@@ -1,5 +1,5 @@
 ﻿# TO DO:
-# * Move the total copied size to the progress bar: <bytes_copied>/<total_bytes>
+# * Move the total copied size to the progress bar: <files_copied>/<total_files>
 #   And make the progress bar dependent on the number of bytes processed instead of the number of files
 #   Problem is: this will further increase the time needed to 'initialize backup' by a factor of 7
 # * Split the text at the bottom, that says how many files are copied, to:
@@ -8,6 +8,11 @@
 #    one with 'Show Error messages', default 'true' (save edits in options)
 #    another below with 'Show log of copied files', default 'false'
 # * Add option 'Add to Start Menu' to installer
+# * Change console text to display the current file instead of the last copied one
+# * Add a list of directories/files to ignore
+#   (in an Appdata file which can be opened through a button or something or in a top menubar)
+# * Auto-check for updates via the github site
+# * Display errors at the end
 
 
 import os
@@ -206,7 +211,7 @@ class App(tk.Frame):
     
     def resetStats(self):
         ''' Resets the backup stats variable: self.stats '''
-        self.stats = {'filesCopied':0, 'bytesCopied':0, 'filesChecked':0}
+        self.stats = {'filesCopied':0, 'bytesCopied':0, 'filesChecked':0, 'errors':0}
         self.lastTime = time.time()
     
     def initializeBackup(self, fromDirectory):
@@ -315,6 +320,7 @@ class App(tk.Frame):
             self.stats['bytesCopied'] += os.path.getsize(fromPath)
         except:
             self.addMessage(self.Lang['ERROR: Failed to copy %s'] % fromPath)
+            self.stats['errors'] += 1
             return
         
         if renewedFile:
