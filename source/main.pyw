@@ -147,7 +147,7 @@ class App(tk.Frame):
         
         self.MB_text = tk.StringVar()
         self.MB_label = tk.Label(self.btm_frame, textvariable = self.MB_text)
-        self.MB_text.set(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes(0)))
+        self.MB_text.set('')
         
         self.language_text = tk.StringVar()
         self.language_text.set(self.options.get('language'))
@@ -276,8 +276,9 @@ class App(tk.Frame):
         self.progressbar.grid_forget()
         self.progressbar.config(value=0)
         self.progressbar_label.grid_forget()
-        # Byte history for bytes/second measurement
+        # Clear byte history for bytes/second measurement, and corresponding text
         self.byteHistory = [(time.time(), 0)]
+        self.MB_text.set('')
         # Error history
         self.erroredFiles = []
     
@@ -389,7 +390,7 @@ class App(tk.Frame):
             self.byteHistory.append((time.time(), self.stats['bytesCopied']))
             self.byteHistory = self.byteHistory[-60:]
             byteRate = (self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0])
-            bottom_text = self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes(byteRate))
+            bottom_text = (self.Lang['_filesCopiedInfo'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes(byteRate))
             if len(self.erroredFiles) != 0:
                 bottom_text = '%s (%d errors)' % (bottom_text, len(self.erroredFiles))
             self.MB_text.set(bottom_text)
