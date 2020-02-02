@@ -7,12 +7,11 @@
 # * Add two checkboxes next to the 'Stop backup' button:
 #    one with 'Show Error messages', default 'true' (save edits in options)
 #    another below with 'Show log of copied files', default 'false'
-# * Add option 'Add to Start Menu' to installer
-# * Change console text to display the current file instead of the last copied one
+# * [DONE, confirmation pending] Change console text to display the current file instead of the last copied one
 # * Add a list of directories/files to ignore?
 #   (in an Appdata file which can be opened through a button or something or in a top menubar)
 # * Auto-check for updates via the github site
-# * Display errors at the end
+# * [DONE, confirmation pending] Display errors at the end
 # * Log the entire console to some file in appdata (can be disabled through menu button, save in options.txt)
 
 
@@ -82,6 +81,7 @@ class App(tk.Frame):
         self.lastTime = 0
         self.byteHistory = [(time.time(), 0)]
         self.doBackup = False
+        self.erroredFiles = []
         
         ## menubar test
         '''self.menubar = tk.Menu(self.master)
@@ -142,6 +142,8 @@ class App(tk.Frame):
         self.console_log.grid(row=0, column=0, sticky='nsew')
         
         self.progressbar = ttk.Progressbar(self.center_frame, orient=tk.HORIZONTAL, mode="determinate")
+        self.progressbar_text = tk.StringVar()
+        self.progressbar_label = tk.Label(self.center_frame, textvariable = self.progressbar_text)
         
         # create the widgets for the bottom frame
         self.start_button = HoverButton(self.btm_frame, text = self.Lang['Start backup'], command = self.backup, bg="green2", activebackground="green4", fg="black", activeforeground="white")
@@ -149,7 +151,7 @@ class App(tk.Frame):
         
         self.MB_text = tk.StringVar()
         self.MB_label = tk.Label(self.btm_frame, textvariable = self.MB_text)
-        self.MB_text.set(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+        self.MB_text.set(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes(0)))
         
         self.language_text = tk.StringVar()
         self.language_text.set(self.options.get('language'))
@@ -244,6 +246,7 @@ class App(tk.Frame):
         numFiles = sum([len(files) for r, d, files in os.walk(fromDirectory)])
         self.progressbar.grid(row=1, column=0, sticky="we")
         self.progressbar.config(maximum=numFiles)
+        self.progressbar_label.grid(row=1, column=0, sticky="we")
         
         self.addMessage(self.Lang['Backup started.'])
     
@@ -260,20 +263,27 @@ class App(tk.Frame):
         '''
         self.doBackup = False
         # Text in console
-        if not error:
-            if stopped:
+        if not error: # No error when initializing the backup
+            if stopped: # Stopped by the user manually
                 self.addMessage(self.Lang['Backup stopped.'], clear=True)
             else:
                 self.addMessage(self.Lang['Backup complete.'], clear=True)
             self.addMessage(self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied'])))
+            if len(self.erroredFiles) != 0: # If there were files that yielded an error while copying
+                self.addMessage(self.Lang['Some files could not be copied:'])
+                for file in self.erroredFiles:
+                    self.addMessage(self.Lang['_reportFailedFile'] % file, crop=False)
         # Buttons
         self.stop_button.pack_forget()
         self.start_button.config(state='normal')
         # Progress bar
         self.progressbar.grid_forget()
         self.progressbar.config(value=0)
+        self.progressbar_label.grid_forget()
         # Byte history for bytes/second measurement
         self.byteHistory = [(time.time(), 0)]
+        # Error history
+        self.erroredFiles = []
     
     def scrollConsole(self, x):
         ''' 
@@ -353,6 +363,11 @@ class App(tk.Frame):
                 previously, and this was just an update since the previously
                 backupped file was outdated.
         '''
+        if renewedFile:
+            self.addMessage(self.Lang['Updating file: %s'] % fromPath)
+        else:
+            self.addMessage(self.Lang['Copying file: %s'] % fromPath)
+        
         try:
             shutil.copyfile(fromPath, toPath)
             shutil.copystat(fromPath, toPath)
@@ -361,12 +376,9 @@ class App(tk.Frame):
         except:
             self.addMessage(self.Lang['ERROR: Failed to copy %s'] % fromPath)
             self.stats['errors'] += 1
+            self.erroredFiles.append(fromPath)
             return
         
-        if renewedFile:
-            self.addMessage(self.Lang['File updated: %s'] % fromPath)
-        else:
-            self.addMessage(self.Lang['File copied: %s'] % fromPath)
     
     def updateGUI(self):
         '''
@@ -380,8 +392,13 @@ class App(tk.Frame):
             # Bytes per second calculation
             self.byteHistory.append((time.time(), self.stats['bytesCopied']))
             self.byteHistory = self.byteHistory[-60:]
-            self.MB_text.set((self.Lang['_filesCopiedInfo'] + ' (%s/s)') % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes((self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0]))))
+            byteRate = (self.byteHistory[-1][1] - self.byteHistory[0][1])/(self.byteHistory[-1][0] - self.byteHistory[0][0])
+            bottom_text = self.Lang['_filesCopiedInfo'] % (self.stats['filesCopied'], self.readableBytes(self.stats['bytesCopied']), self.readableBytes(byteRate))
+            if len(self.erroredFiles) != 0:
+                bottom_text = '%s (%d errors)' % (bottom_text, len(self.erroredFiles))
+            self.MB_text.set(bottom_text)
             self.progressbar["value"] = self.stats['filesChecked']
+            self.progressbar_text.set(self.Lang['_fileRatio'] % (self.stats['filesChecked'], self.progressbar.cget('maximum')))
             root.update()
     
     def backup(self):

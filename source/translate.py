@@ -8,17 +8,20 @@ Language = {
         'Start backup' : 'Start backup',
         'Stop backup' : 'Stop backup',
         'info' : 'Choose the folder that you want to backup,\nand the folder where you want the backup to be placed in.',
-        'File updated: %s' : 'File updated: %s',
-        'File copied: %s' : 'File copied: %s',
+        'Updating file: %s' : 'Updating file: %s',
+        'Copying file: %s' : 'Copying file: %s',
         ' does not exist, so can not be backupped.' : ' does not exist, so can not be backupped.',
         'Copying folder %s' : 'Copying folder %s',
         'Backup complete.' : 'Backup complete.',
         'Backup stopped.' : 'Backup stopped.',
-        '_filesCopiedInfo' : 'Copied %d files, equal to %s.',
+        '_filesCopiedInfo' : '%d files copied with a total size of %s. (%s/s)',
+        '_fileRatio' : 'checked %s/%s files',
         'Preparing backup...' : 'Preparing backup...\nThis may take several minutes, depending on the size of the backup.',
         'Backup started.' : 'Backup started.',
         'Language cant be changed whilst backupping' : 'Language can\'t be changed whilst backupping',
-        'ERROR: Failed to copy %s' : 'ERROR: Failed to copy %s'
+        'ERROR: Failed to copy %s' : 'ERROR: Failed to copy %s',
+        'Some files could not be copied:' : 'Some files could not be copied:',
+        '_reportFailedFile' : 'Failed to copy: %s'
     },
     'NL' : {
         'Choose folder' : 'Map kiezen',
@@ -29,16 +32,19 @@ Language = {
         'Start backup' : 'Start backup',
         'Stop backup' : 'Stop backup',
         'info' : 'Kies de map die u wil backuppen,\nen de map waar u de backup in wil plaatsen.',
-        'File updated: %s' : 'Bestand geüpdatet: %s',
-        'File copied: %s' : 'Bestand gekopieerd: %s',
+        'Updating file: %s' : 'Bestand updaten: %s',
+        'Copying file: %s' : 'Bestand kopiëren: %s',
         ' does not exist, so can not be backupped.' : ' bestaat niet, dus kan niet gebackupt worden.',
         'Copying folder %s' : 'Map kopiëren: %s',
         'Backup complete.' : 'Backup compleet.',
         'Backup stopped.' : 'Backup gestopt.',
-        '_filesCopiedInfo' : '%d bestanden gekopiëerd, in totaal %s.',
+        '_filesCopiedInfo' : '%d bestanden gekopiëerd, in totaal %s. (%s/s)',
+        '_fileRatio' : '%s/%s bestanden gecontroleerd',
         'Preparing backup...' : 'Backup voorbereiden...\nDit kan enkele minuten duren, afhankelijk van de grootte van de backup.',
         'Backup started.' : 'Backup gestart.',
         'Language cant be changed whilst backupping' : 'Taal kan niet veranderd worden tijdens het backuppen!',
-        'ERROR: Failed to copy %s' : 'ERROR: Kan %s niet kopiëren'
+        'ERROR: Failed to copy %s' : 'ERROR: Kan %s niet kopiëren',
+        'Some files could not be copied:' : 'Enkele bestanden konden niet gekopiëerd worden:',
+        '_reportFailedFile' : 'Kon niet kopiëren: %s'
     }
 }
