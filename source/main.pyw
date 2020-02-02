@@ -2,17 +2,13 @@
 # * Move the total copied size to the progress bar: <files_copied>/<total_files>
 #   And make the progress bar dependent on the number of bytes processed instead of the number of files
 #   Problem is: this will further increase the time needed to 'initialize backup' by a factor of 7
-# * Split the text at the bottom, that says how many files are copied, to:
-#   <n> files copied, <errors> errors encountered \n (<bytes per second>), approximately <time> remaining.
-# * Add two checkboxes next to the 'Stop backup' button:
-#    one with 'Show Error messages', default 'true' (save edits in options)
-#    another below with 'Show log of copied files', default 'false'
+#   But this can be used to calculate an approximate remaining time
 # * [DONE, confirmation pending] Change console text to display the current file instead of the last copied one
 # * Add a list of directories/files to ignore?
 #   (in an Appdata file which can be opened through a button or something or in a top menubar)
+# * Log the entire console to some file in appdata (can be disabled through menu button, save in options.txt)
 # * Auto-check for updates via the github site
 # * [DONE, confirmation pending] Display errors at the end
-# * Log the entire console to some file in appdata (can be disabled through menu button, save in options.txt)
 
 
 import os
