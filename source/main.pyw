@@ -9,10 +9,11 @@
 #    another below with 'Show log of copied files', default 'false'
 # * Add option 'Add to Start Menu' to installer
 # * Change console text to display the current file instead of the last copied one
-# * Add a list of directories/files to ignore
+# * Add a list of directories/files to ignore?
 #   (in an Appdata file which can be opened through a button or something or in a top menubar)
 # * Auto-check for updates via the github site
 # * Display errors at the end
+# * Log the entire console to some file in appdata (can be disabled through menu button, save in options.txt)
 
 
 import os
@@ -175,7 +176,8 @@ class App(tk.Frame):
     def windowResized(self, event):
         ''' 
             Handles everything that needs to be done when the window is resized,
-            for example changing the number of lines displayed in the console 
+            for example changing the number of lines displayed in the console.
+            @param event [?]: Necessary for binding to <Configure> tkinter event.
         '''
         # Since we always read from the .height property, we need to update it accordingly
         self.console_log.height = (self.console_log.winfo_height()/2)//self.console_log.fontSize
@@ -193,11 +195,15 @@ class App(tk.Frame):
         self.doBackup = False
     
     def reset(self):
-        ''' Resets the App by re-__init__ializing '''
+        '''
+            Resets the App by re-__init__ializing
+        '''
         self.__init__(root, self.options)
     
     def languageChanged(self, *args):
-        ''' Resets the App, using the new language '''
+        '''
+            Resets the App, using the new language
+        '''
         if self.doBackup:
             # Since the method to change the language is simply to reset the app,
             # it is not possible to change the language whilst backupping.
@@ -210,7 +216,9 @@ class App(tk.Frame):
         self.reset()
     
     def resetStats(self):
-        ''' Resets the backup stats variable: self.stats '''
+        '''
+            Resets the backup stats variable: self.stats
+        '''
         self.stats = {'filesCopied':0, 'bytesCopied':0, 'filesChecked':0, 'errors':0}
         self.lastTime = time.time()
     
@@ -221,6 +229,8 @@ class App(tk.Frame):
             - resets the backup stats (files copied, bytes copied...)
             - changes appearance of start and stop buttons
             - shows progress bar and sets its maximum
+            @param fromDirectory [str]: The path of the directory that needs
+                to be backupped.
         '''
         self.doBackup = True
         self.resetStats()
@@ -243,6 +253,10 @@ class App(tk.Frame):
             - sets self.doBackup to False
             - if there was no error, say that everything was good
             - regardless of errors, reset the buttons and progressbar etc.
+            @param error [bool]: Whether an error occured when initializing
+                the backup.
+            @param stopped [bool]: Whether the backup was stopped manually by
+                the user by pressing the 'Stop backup' button.
         '''
         self.doBackup = False
         # Text in console
@@ -262,45 +276,66 @@ class App(tk.Frame):
         self.byteHistory = [(time.time(), 0)]
     
     def scrollConsole(self, x):
-        ''' Scrolls the console to the end '''
+        ''' 
+            Scrolls the console to the end.
+            @param x [?]: Necessary for binding to <<Modified>> tkinter event.
+        '''
         self.console_log.see(tk.END)
         self.console_log.edit_modified(0)
         
-    def addMessage(self, message, clear=False, newline=True):
+    def addMessage(self, message, clear=False, newline=True, crop=True):
         ''' 
             Adds a new line to the self.console_log widget.
             This is not as easy as just adding a line: the Text widget must be
             enabled, then disabled, and out-of-sight lines deleted.
+            @param message [str]: The message to be inserted into the console.
+            @param clear [bool]: Whether to clear the entire console and keep
+                only the new message.
+            @param newline [bool]: Whether to begin a newline for this message.
+            @param crop [bool]: Whether to crop the console to keep only the
+                latest entries that are visible.
         '''
         self.console_log.config(state='normal')
         if clear:
             self.console_log.delete('1.0', tk.END)
-        message +='\n' if newline else ''
+        message += '\n' if newline else ''
         self.console_log.insert(tk.END, message, "indent")
-        self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
+        if crop:
+            self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
         self.console_log.config(state='disabled')
     
     def updatePaths(self, *args, **kwargs):
+        '''
+            Updates the options with the current text in the entry fields for
+            the fromPath and toPath.
+        '''
         self.options.set('fromPath', self.fromPathName.get())
         self.options.set('toPath', self.toPathName.get())
 
-    def fromPathGet(self, dirName=None):
-        ''' Shows a dialog to choose the directory to backup '''
+    def fromPathGet(self):
+        '''
+            Shows a dialog to choose the directory to backup.
+        '''
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose the folder that you want to backup'], initialdir=self.fromPathName.get())
         if fileName:
             self.fromPathName.set(fileName)
             self.options.set('fromPath', fileName)
         
         
-    def toPathGet(self, dirName=None):
-        ''' Shows a dialog to choose the directory to place the backup in '''
+    def toPathGet(self):
+        '''
+            Shows a dialog to choose the directory to place the backup in.
+        '''
         fileName = tk.filedialog.askdirectory(title = self.Lang['Choose folder to place backup in'], initialdir=self.toPathName.get())
         if fileName:
             self.toPathName.set(fileName)
             self.options.set('toPath', fileName)
     
     def readableBytes(self, size):
-        ''' Converts an int to a string displaying kB, MB, GB, TB... '''
+        '''
+            Converts an int to a string displaying kB, MB, GB, TB...
+            @param size [int]: The file size to convert to a readable format.
+        '''
         power, n = 2**10, 0
         Dic_powerN = {0 : '', 1: 'k', 2: 'M', 3: 'G', 4: 'T'}
         while size > power:
@@ -309,9 +344,14 @@ class App(tk.Frame):
         return '%.2f %sB' % (size, Dic_powerN[n])
         
     def copyfile(self, fromPath, toPath, renewedFile=True):
-        ''' 
+        '''
             Copies a file. Updates backup stats accordingly and catches copy-
-            errors. Displays a corresponding message in self.console_log. 
+            errors. Displays a corresponding message in self.console_log.
+            @param fromPath [str]: The location of the original file.
+            @param toPath [str]: The location of the copy of the file.
+            @param renewedFile [bool]: Whether the file was already backupped
+                previously, and this was just an update since the previously
+                backupped file was outdated.
         '''
         try:
             shutil.copyfile(fromPath, toPath)
@@ -329,7 +369,8 @@ class App(tk.Frame):
             self.addMessage(self.Lang['File copied: %s'] % fromPath)
     
     def updateGUI(self):
-        ''' Redraws the GUI.
+        '''
+            Redraws the GUI.
             Also updates the bytesHistory list, which holds the total amount
             of bytes copied at each updateGUI call, and calculates the bytes/s
             using the self.lastTime variable to calculate the elapsed time.
@@ -344,7 +385,9 @@ class App(tk.Frame):
             root.update()
     
     def backup(self):
-        ''' The main function that is called when 'start backup' is pressed '''
+        '''
+            The main function that is called when 'Start backup' is pressed
+        '''
         fromDirectory = self.fromPathName.get()
         toDirectory = self.toPathName.get()
         
@@ -409,26 +452,37 @@ class Options():
                 self.options = json.load(optionsFile)
     
     def updateFile(self):
-        ''' Writes the options dictionary to a json file to remember the settings '''
+        '''
+            Writes the options dictionary to a json file to remember the settings
+        '''
         with open(self.file, 'w') as optionsFile:
             json.dump(self.options, optionsFile)
 
     def set(self, optionName, value, saveFile=False):
-        ''' 
+        '''
             Changes one of the settings, including:
             - language : EN or NL
             - fromPath : the path to backup
             - toPath : the path to place the backup in
+            @param optionName [str]: The name of the option to be updated.
+            @param value [?]: The value to assign to that option.
+            @param saveFile [bool]: Whether to save the options.json file
+                after this update of the options object.
         '''
         self.options[optionName] = value
         self.updateFile()
 
     def get(self, optionName):
-        ''' Gets the specified options value '''
+        '''
+            Gets the specified option's value.
+            @param optionName [str]: Name of the option that is requested.
+        '''
         return self.options[optionName]
 
     def reset(self):
-        ''' Resets all options to the default settings '''
+        '''
+            Resets all options to the default settings.
+        '''
         self.options = {'language' : 'EN', 'fromPath' : '', 'toPath' : ''}
         self.updateFile()
 
