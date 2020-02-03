@@ -1,9 +1,11 @@
 2.2.5
 Console and text tweaks
++ Auto-update when an update is available
 + Any files which could not be copied are now shown after the backup finishes
 + Added progress text (number of files) inside progressbar
 * Console tells the file that is being copied rather than the file that was just copied
 * Text explaining progress at the bottom next to language button no longer appears when not necessary
+* Changed error handling
 ---
 2.2.4
 Fixed options.json permission error
