@@ -10,22 +10,24 @@
 # * Auto-check for updates via the github site
 # * [DONE, confirmation pending] Display errors at the end
 
+# Local imports
+import programenv as pe
+from translate import Language
 
+# General imports
 import os
 import shutil
 import win32api
 import time
 import json
 import ctypes
-from translate import Language
-
 import traceback
+from packaging import version as pkg_version
 
 try:
     # Python 3.x
     import tkinter as tk
     from tkinter import ttk
-    from tkinter.messagebox import showerror
     import tkinter.filedialog
 except:
     raise ImportError('Python 3 (tkinter) is needed to run %s, but is not found.' % __name__)
@@ -182,15 +184,11 @@ class App(tk.Frame):
     
     def report_callback_exception(self, *args):
         '''
-            Function gets called when an exception occurs in Python itself.
+            Function gets called when an exception occurs in tkinter itself.
             Since the console is invisible, the error is displayed in a custom window.
         '''
-        # traceback.format_exception returns a list of strings, each being one line of the exception output,
-        # so they are concatenated with ''.join
-        etype, value, tb = args
-        showerror('An ERROR has occured.', ''.join(traceback.format_exception(etype, value, tb)))
-        # Since an error occured, the backup should be 'properly' stopped as well
-        self.doBackup = False
+        pe.reportError(fatal=True, message='The tkinter GUI manager has encountered an error.')
+        self.doBackup = False # Since an error occured, the backup should be 'properly' (sort of) stopped as well
     
     def reset(self):
         '''
@@ -428,7 +426,7 @@ class App(tk.Frame):
                     return None
                 self.stats['filesChecked'] += 1
                 pathName = os.path.join(path,filename)
-                # Prevent issues whith / or \ (error occurs when backupping whole D:/ or C:/ disk)
+                # Prevent issues with / or \ (error occurs when backupping whole D:/ or C:/ disk)
                 backupPathName = toDirectory + pathName.split(fromDirectory.strip('\\/ '))[-1]
                 
                 # If the file does not yet exist in the backup directory
@@ -455,7 +453,7 @@ class App(tk.Frame):
 
 class Options():
     def __init__(self, file='options.json'):
-        self.appdataDirectory = os.path.expandvars("%APPDATA%\\Jonathan's Backupper")
+        self.appdataDirectory = os.path.expandvars(u"%%APPDATA%%\\%s" % pe.PROGRAMNAME)
         self.file = os.path.join(self.appdataDirectory, file)
         if not os.path.exists(self.appdataDirectory):
             os.makedirs(self.appdataDirectory)
@@ -502,13 +500,17 @@ class Options():
 
 
 if __name__ == '__main__':
+    pe.checkForUpdates()
+
+    # Tkinter
     root = tk.Tk()
     screen_width, screen_height = root.winfo_screenwidth(), root.winfo_screenheight()
     # Set width, height of window, and position of upper left corner on screen
     root.geometry('%dx%d+%d+%d' % (screen_width//2, screen_height//3, screen_width//4, screen_height//3))
-    root.title('Jonathan\'s backupper')
+    root.title(pe.PROGRAMNAME)
     root.iconbitmap('data/icon.ico')
     root.tk_setPalette(background='gray92', foreground='black')
     root.resizable(True, True)
 
+    # Main app
     app = App(root, Options())
