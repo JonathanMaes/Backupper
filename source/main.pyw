@@ -240,7 +240,7 @@ class App(tk.Frame):
         numFiles = sum([len(files) for r, d, files in os.walk(fromDirectory)])
         self.progressbar.grid(row=1, column=0, sticky="we")
         self.progressbar.config(maximum=numFiles)
-        self.progressbar_label.grid(row=1, column=0, sticky="we")
+        self.progressbar_label.grid(row=2, column=0, sticky="we")
         
         self.addMessage(self.Lang['Backup started.'])
     

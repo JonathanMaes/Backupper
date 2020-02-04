@@ -23,6 +23,7 @@ Compression=lzma
 SolidCompression=yes       
 DisableDirPage=auto
 DisableProgramGroupPage=auto
+PrivilegesRequired=admin
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
