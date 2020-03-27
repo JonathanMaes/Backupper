@@ -22,6 +22,7 @@ import time
 import json
 import ctypes
 import traceback
+import sys
 from packaging import version as pkg_version
 
 try:
@@ -500,7 +501,10 @@ class Options():
 
 
 if __name__ == '__main__':
-    pe.checkForUpdates()
+    willUpdate = pe.checkForUpdates()
+    print('goeiemorgen')
+    if willUpdate:
+        exit()
 
     # Tkinter
     root = tk.Tk()

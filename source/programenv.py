@@ -1,6 +1,7 @@
 import traceback
 import ctypes
 import urllib.request
+import webbrowser
 from packaging import version as pkg_version
 
 
@@ -50,7 +51,6 @@ def checkForUpdates(versionFile=REMOTE_FILENAME_CHANGELOG):
             result = ctypes.windll.user32.MessageBoxW(0, text, title, 4) # 4: 'Yes'/'No'-messagebox
             if result == 6: # 'Yes'
                 webbrowser.open(REMOTE_FILENAME_INSTALLER)
-                quit()
                 return True
             elif result == 7: # 'No'
                 return False
