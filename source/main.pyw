@@ -23,7 +23,6 @@ import json
 import ctypes
 import traceback
 import sys
-from packaging import version as pkg_version
 
 try:
     # Python 3.x
@@ -502,9 +501,8 @@ class Options():
 
 if __name__ == '__main__':
     willUpdate = pe.checkForUpdates()
-    print('goeiemorgen')
     if willUpdate:
-        exit()
+        sys.exit()
 
     # Tkinter
     root = tk.Tk()

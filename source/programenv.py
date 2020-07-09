@@ -1,5 +1,7 @@
-import traceback
 import ctypes
+import psutil
+import sys
+import traceback
 import urllib.request
 import webbrowser
 from packaging import version as pkg_version
@@ -7,10 +9,13 @@ from packaging import version as pkg_version
 
 ## PROGRAM ENVIRONMENT VARIABLES ##
 PROGRAMNAME = u"Jonathan's Backupper"
+PROGRAMNAMEEXECUTABLE = u"jonathansbackupper"
 COMPANYNAME = u"OrOrg Development inc."
 REMOTE_FILENAME_CHANGELOG = 'https://raw.githubusercontent.com/JonathanMaes/Backupper/master/source/changelog.txt'
 REMOTE_FILENAME_INSTALLER = 'https://github.com/JonathanMaes/Backupper/blob/master/installer/JonathansBackupper_installer.exe?raw=true'
-
+CLIENT_FILENAME_CHANGELOG = 'changelog.txt'
+with open(CLIENT_FILENAME_CHANGELOG, 'r') as f: # First line of changelog.txt is version
+    VERSION = f.readline()
 
 ## PROGRAM ENVIRONMENT FUNCTIONS ##
 def reportError(fatal=False, notify=None, message=''):
@@ -27,10 +32,11 @@ def reportError(fatal=False, notify=None, message=''):
     
     if notify:
         ctypes.windll.user32.MessageBoxW(0, info, PROGRAMNAME, 0)
+    else:
+        print(info)
 
     if fatal:
-        quit()
-
+        sys.exit()
 
 def checkForUpdates(versionFile=REMOTE_FILENAME_CHANGELOG):
     '''
@@ -60,3 +66,21 @@ def checkForUpdates(versionFile=REMOTE_FILENAME_CHANGELOG):
     except:
         reportError(fatal=False, notify=False, message='%s: could not connect to update-server.' % versionFile)
         return False
+
+def checkIfRunning(shutOtherDown=True):
+    instances = []
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time'])
+            if PROGRAMNAMEEXECUTABLE.lower() in pinfo['name'].lower():
+                instances.append(pinfo)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    
+    sorted_instances = sorted(instances, key=lambda x:x['create_time'])
+    for elem in sorted_instances[:-1]: # All but the last one opened
+        if shutOtherDown:
+            psutil.Process(int(elem['pid'])).terminate() # Kill other processes
+            print('Program was already running, terminated previous instance.')
+        else:
+            print('WARNING: Multiple instances of the program are running.')
