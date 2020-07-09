@@ -33,16 +33,16 @@ Name: "dutch"; MessagesFile: "compiler:Languages\Dutch.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\main.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\jonathansbackupper.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\Jonathan's Backupper"; Filename: "{app}\main.exe"
-Name: "{commondesktop}\Jonathan's Backupper"; Filename: "{app}\main.exe"; Tasks: desktopicon
+Name: "{group}\Jonathan's Backupper"; Filename: "{app}\jonathansbackupper.exe"
+Name: "{commondesktop}\Jonathan's Backupper"; Filename: "{app}\jonathansbackupper.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\main.exe"; Description: "{cm:LaunchProgram,Jonathan's Backupper}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\jonathansbackupper.exe"; Description: "{cm:LaunchProgram,Jonathan's Backupper}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: files; Name: "{userappdata}\Jonathan's Backupper\options.json"
