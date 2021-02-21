@@ -1,4 +1,4 @@
-#define ApplicationVersion GetFileVersion('dist/main.exe')
+#define ApplicationVersion GetFileVersion('dist/jonathansbackupper.exe')
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
