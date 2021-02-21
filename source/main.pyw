@@ -304,7 +304,10 @@ class App(tk.Frame):
         if clear:
             self.console_log.delete('1.0', tk.END)
         message += '\n' if newline else ''
-        self.console_log.insert(tk.END, message, "indent")
+        try:
+            self.console_log.insert(tk.END, message, "indent")
+        except:
+            self.console_log.insert(tk.END, self.Lang["Copying file: File name could not be displayed."], "indent")
         if crop:
             self.console_log.delete('1.0', '%d.0' % (int(self.console_log.index('end-1c').split('.')[0])-self.console_log.height))
         self.console_log.config(state='disabled')
